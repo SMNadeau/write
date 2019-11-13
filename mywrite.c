@@ -33,7 +33,7 @@ int main(int ac, char *av[])
     char file[255];
     char ttyList[20][255*sizeof(char)];
     bool foundUser = 0;    
-  	bool getTTY = 0;
+	bool getTTY = 0;
   	int i = 0;
 	int lowest = 0;
         char openMessage[237*sizeof(char)]; 
@@ -49,14 +49,17 @@ int main(int ac, char *av[])
 	
 	strftime(timeBuffer, 50, "%H:%M", hm);
 	
-	
+		
     if (ac == 2)
     {
-        lowest = show_info(&current_record, av[1], av[2], file, getTTY, lowest); 
-	printf("%s",file);  
-        close(utmpfd);
+	char proxy[5][5];
+	while(read(utmpfd, &current_record, reclen)==reclen)
+	{
+       		lowest = show_info(&current_record, av[1], proxy[1], file, getTTY, lowest); 
+	}
 
-		/* open devices */
+        close(utmpfd);
+	/* open devices */
         fd = open(file, O_WRONLY);
         if ( fd == -1 )
         {
@@ -82,8 +85,11 @@ int main(int ac, char *av[])
     else if(ac == 3)
     {
         getTTY = 1;
-        lowest = show_info(&current_record, av[1], av[2], file, getTTY, lowest); 
-		
+
+	while(read(utmpfd, &current_record, reclen)==reclen)
+	{
+        	lowest = show_info(&current_record, av[1], av[2], file, getTTY, lowest); 
+	}
 		close(utmpfd);
         
 		/* open devices */
@@ -123,24 +129,24 @@ bool show_info(struct utmp *utbufp, char input[],char ttyInput[], char *file, bo
         
         if(strcmp(user, input) == 0)
         {
-            sprintf(file, "/dev/%s", utbufp->ut_line);
-        
-			if(stat(input, &infobuf) == -1)
-			{
-				perror(input);
-			}
-			else
-			{
-				time_t currentTime = time(0);
-				idle = currentTime - infobuf.st_atime;
-			}
-			
-			if(idle < lowest)
-			{
-				lowest = idle;
-				printf("dev/%s",utbufp->ut_line);
-				sprintf(file, "/dev/%s", utbufp->ut_line);
-			}
+       
+     
+		if(stat(input, &infobuf) == -1)
+		{
+			//perror(input);
+		}
+		else
+		{
+			time_t currentTime = time(0);
+			idle = currentTime - infobuf.st_atime;
+		}
+		
+		if(idle < lowest && lowest != 0)
+		{
+			lowest = idle;
+			printf("dev/%s",utbufp->ut_line);
+			sprintf(file, "/dev/%s", utbufp->ut_line);
+		}
         }
     }
     
@@ -153,11 +159,11 @@ bool show_info(struct utmp *utbufp, char input[],char ttyInput[], char *file, bo
             sprintf(file,"/dev/%s", utbufp->ut_line);
             return 1;
         }
-		else
-		{
-			printf("Username and tty mismatch!");
-			perror(input);
-		}
+	else
+	{
+		printf("Username and tty mismatch!");
+		perror(input);
+	}
     }
     
     else
