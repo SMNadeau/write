@@ -1,11 +1,17 @@
-#include	<stdio.h>
-#include 	<stdlib.h>
-#include	<fcntl.h>
-#include 	<unistd.h>
-#include 	<string.h>
-#include 	<errno.h>
+#include <stdio.h>
+#include <time.h>
 
-int main( int ac, char *av[] )
-{
-	char user[sizeof(av[1])*sizeof(char)];	
+int main () {
+   time_t rawtime;
+   struct tm *info;
+   char buffer[80];
+
+   time( &rawtime );
+
+   info = localtime( &rawtime );
+
+   strftime(buffer,80,"%x - %I:%M%p", info);
+   printf("Formatted date & time : |%s|\n", buffer );
+  
+   return(0);
 }
