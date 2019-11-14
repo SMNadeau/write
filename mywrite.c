@@ -36,19 +36,24 @@ int main(int ac, char *av[])
 	bool getTTY = 0;
   	int i = 0;
 	int lowest = 0;
-        char openMessage[237*sizeof(char)]; 
+    char openMessage[237*sizeof(char)]; 
 	char *mytty = ttyname(STDIN_FILENO);
 	char myTTY[255*sizeof(char)];
 	char username[255];
-        getlogin_r(username,255);
+    getlogin_r(username,255);
 	time_t currentTime = time(0);
-        struct tm *hm;
+    struct tm *hm;
 	char timeBuffer[50];
 	time (&currentTime);
 	hm = localtime(&currentTime);
 	
 	strftime(timeBuffer, 50, "%H:%M", hm);
 	
+	if ( (utmpfd = open(UTMP_FILE, O_RDONLY)) == -1 )
+	{
+        perror(UTMP_FILE);
+        exit(1);
+    }
 		
     if (ac == 2)
     {
@@ -63,10 +68,9 @@ int main(int ac, char *av[])
         fd = open(file, O_WRONLY);
         if ( fd == -1 )
         {
-            perror(av[1]);
+            //perror(av[1]);
             exit(1);
         }
-		printf("%s",timeBuffer);
 		sprintf(openMessage, "Message from %s@%s on yourtty at %s ...", username, mytty, timeBuffer);
 		write(fd, openMessage, strlen(buf));
 		
@@ -96,7 +100,7 @@ int main(int ac, char *av[])
         fd = open(file, O_WRONLY );
         if ( fd == -1 )
         {
-            perror(av[1]);
+           printf("")
             exit(1);
         }
 
@@ -115,62 +119,64 @@ int main(int ac, char *av[])
         printf("Improper usage.");
     }
 }
-bool show_info(struct utmp *utbufp, char input[],char ttyInput[], char *file, bool getTTY, int lowest)
+int show_info(struct utmp *utbufp, char input[],char ttyInput[], char *file, bool getTTY, int lowest)
 {
     struct stat infobuf;
     char user[255*sizeof(char)];
 	int idle;
     
-    
-    if(getTTY == 0)
-    {
-               
-        sprintf(user,"%s", utbufp->ut_name);
-        
-        if(strcmp(user, input) == 0)
-        {
-       
-     
-		if(stat(input, &infobuf) == -1)
+    if ( utbuf.ut_type == USER_PROCESS )
+	{
+		if(getTTY == 0)
 		{
-			//perror(input);
+               
+			sprintf(user,"%s", utbufp->ut_name);
+        
+			if(strcmp(user, input) == 0)
+			{
+				if(stat(input, &infobuf) == -1)
+				{
+					//perror(input);
+				}
+				else
+				{
+					time_t currentTime = time(0);
+					idle = currentTime - infobuf.st_atime;
+				}
+		
+				if(idle < lowest && lowest != 0)
+				{
+					lowest = idle;
+					printf("dev/%s",utbufp->ut_line);
+					sprintf(file, "/dev/%s", utbufp->ut_line);
+				}
+			}
+		}
+    
+		else if(getTTY == 1)
+		{
+			sprintf(user,"%s", utbufp->ut_line);
+			if((strcmp(user, ttyInput) == 0) && (strcmp((utbufp->ut_name), input) == 0)) 
+			{
+				sprintf(file,"/dev/%s", utbufp->ut_line);
+				return 1;
+			}
+			else
+			{
+			printf("Username and tty mismatch!");
+			perror(input);
+			}
+		}
+    
+		else
+		{
+			return 0;
 		}
 		else
 		{
-			time_t currentTime = time(0);
-			idle = currentTime - infobuf.st_atime;
+			printf("User not online.");
 		}
-		
-		if(idle < lowest && lowest != 0)
-		{
-			lowest = idle;
-			printf("dev/%s",utbufp->ut_line);
-			sprintf(file, "/dev/%s", utbufp->ut_line);
-		}
-        }
-    }
-    
-    else if(getTTY == 1)
-    {
-        sprintf(user,"%s", utbufp->ut_line);
-        if((strcmp(user, ttyInput) == 0) && (strcmp((utbufp->ut_name), input) == 0)) 
-        {
-			
-            sprintf(file,"/dev/%s", utbufp->ut_line);
-            return 1;
-        }
-	else
-	{
-		printf("Username and tty mismatch!");
-		perror(input);
-	}
-    }
-    
-    else
-    {
-        return 0;
-    }
-    
+	}  
 }
 
 
