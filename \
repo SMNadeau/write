@@ -61,7 +61,7 @@ int main(int ac, char *av[])
 	while(read(utmpfd, &current_record, reclen)==reclen)
 	{
        		lowest = show_info(&current_record, av[1], proxy[1], file, getTTY, lowest); 
-	  	//printf("File out: %s \n", file);      	
+		//printf("lowest %s\n", file); 
 	}
 
 
@@ -134,24 +134,21 @@ int show_info(struct utmp *utbufp, char input[],char ttyInput[], char *file, boo
 		{
                
 			sprintf(user,"%s", utbufp->ut_name);
+        
 			if(strcmp(user, input) == 0)
 			{
-				/*if(stat(input, &infobuf) == -1)
+				if(stat(input, &infobuf) == -1)
 				{
-					printf("here");
-
 					//perror(input);
 				}
 				else
-				*/
-					//printf("here");
-				time_t currentTime = time(0);
-				idle = currentTime - infobuf.st_atime;
-				
-				printf(" idle: %d\t Lowest: %d", idle, lowest);	
+				{
+					time_t currentTime = time(0);
+					idle = currentTime - infobuf.st_atime;
+				}
+		
 				if(idle < lowest && lowest != 0)
 				{
-					
 					lowest = idle;
 					printf("dev/%s",utbufp->ut_line);
 					sprintf(file, "/dev/%s", utbufp->ut_line);
